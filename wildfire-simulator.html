@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildfire Spread Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95em;
+        }
+
+.main-content {
+	            display: flex;
+	            flex-direction: column; /* Change 1: Vertical to horizontal layout */
+	            gap: 20px;
+	            padding: 20px;
+	        }
+
+        .map-container {
+            flex: 1;
+            background: #f5f5f5;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 0.8em;
+        }
+
+        canvas {
+            display: block;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: crosshair;
+            background: url(map.png) center/cover;
+        }
+
+.controls {
+	            width: 100%; /* Make controls full width */
+	            background: #f9f9f9;
+	            border-radius: 10px;
+	            padding: 20px;
+	            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+	            display: flex; /* Make controls content horizontal */
+	            flex-wrap: wrap;
+	            gap: 20px;
+	            justify-content: space-around;
+	        }
+
+.control-section {
+	            margin-bottom: 0;
+	            padding-bottom: 0;
+	            border-bottom: none;
+	            flex: 1;
+	            min-width: 200px;
+	        }
+
+.control-section:last-child {
+	            border-bottom: none;
+	            margin-bottom: 0;
+	        }
+
+        .control-section h3 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9em;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .value-display {
+            display: inline-block;
+            background: #ff6b6b;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .wind-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .wind-btn {
+            padding: 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            font-size: 0.9em;
+        }
+
+        .wind-btn:hover {
+            background: #f0f0f0;
+            border-color: #ff6b6b;
+        }
+
+        .wind-btn.active {
+            background: #ff6b6b;
+            color: white;
+            border-color: #ff6b6b;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95em;
+        }
+
+        .btn-start {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-start:hover {
+            background: #45a049;
+        }
+
+        .btn-pause {
+            background: #ff9800;
+            color: white;
+        }
+
+        .btn-pause:hover {
+            background: #e68900;
+        }
+
+        .btn-reset {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #da190b;
+        }
+
+        .stats {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .stats h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .stat-label {
+            color: #666;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .legend {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .legend h3 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.85em;
+        }
+
+        .legend-color {
+            width: 25px;
+            height: 25px;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .instruction {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #1976d2;
+            border-left: 4px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 F.I.R.O. Wildfire Spread Simulator</h1>
+            <p>Proof-of-concept demonstrating high-resolution terrain and weather–driven fire dynamics</p>
+        </div>
+
+        <div class="main-content">
+            <div class="map-container">
+                <canvas id="mapCanvas" width="800" height="600"></canvas>
+                <div>Click on the map to place a fire ignition point, then start the simulation!</div>
+            </div>            
+
+            
+            <div class="controls">
+                
+                <div class="control-section">
+                    <h3>🌡️ Temperature</h3>
+                    <div class="control-group">
+                        <label>Temperature: <span class="value-display" id="tempValue">25°C</span></label>
+                        <input type="range" id="temperature" min="0" max="50" value="25">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>💧 Precipitation</h3>
+                    <div class="control-group">
+                        <label>Humidity: <span class="value-display" id="precipValue">30%</span></label>
+                        <input type="range" id="precipitation" min="0" max="100" value="30">
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>💨 Wind</h3>
+                    <div class="control-group">
+                        <label>Wind Speed: <span class="value-display" id="windSpeedValue">15 km/h</span></label>
+                        <input type="range" id="windSpeed" min="0" max="80" value="15">
+                    </div>
+                    <div class="control-group">
+                        <label>Wind Direction:</label>
+                        <div class="wind-selector">
+                            <button class="wind-btn" data-dir="NW">NW</button>
+                            <button class="wind-btn" data-dir="N">N</button>
+                            <button class="wind-btn" data-dir="NE">NE</button>
+                            <button class="wind-btn" data-dir="W">W</button>
+                            <button class="wind-btn" data-dir="NONE">-</button>
+                            <button class="wind-btn active" data-dir="E">E</button>
+                            <button class="wind-btn" data-dir="SW">SW</button>
+                            <button class="wind-btn" data-dir="S">S</button>
+                            <button class="wind-btn" data-dir="SE">SE</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>⚙️ Simulation</h3>
+                    <div class="control-group">
+                        <label>Speed: <span class="value-display" id="speedValue">1x</span></label>
+                        <input type="range" id="simSpeed" min="1" max="10" value="5">
+                    </div>
+                    <div class="button-group">
+                        <button class="btn-start" id="startBtn">▶ Start</button>
+                        <button class="btn-pause" id="pauseBtn">⏸ Pause</button>
+                        <button class="btn-reset" id="resetBtn">↻ Reset</button>
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <h3>📊 Statistics</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Elapsed Time:</span>
+                        <span class="stat-value" id="timeElapsed">0 min</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Area Burned:</span>
+                        <span class="stat-value" id="areaBurned">0 ha</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Active Fire:</span>
+                        <span class="stat-value" id="activeFire">0 cells</span>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    <h3>🗺️ Terrain Legend</h3>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #2d5016;"></div>
+                        <span>Forest (High fuel)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #90EE90;"></div>
+                        <span>Grassland (Medium fuel)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #8B7355;"></div>
+                        <span>Shrubland (Medium fuel)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #D2B48C;"></div>
+                        <span>Barren (Low fuel)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4169E1;"></div>
+                        <span>Water (No fuel)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mapCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const GRID_SIZE = 80;  // Changed from 40 to 80
+        const CELL_SIZE = canvas.width / GRID_SIZE;
+        
+        const TERRAIN_TYPES = {
+            FOREST: { color: 'rgba(45, 80, 22, 0.4)', fuel: 1.0, name: 'Forest' },
+            GRASS: { color: 'rgba(144, 238, 144, 0.3)', fuel: 0.7, name: 'Grassland' },
+            SHRUB: { color: 'rgba(139, 115, 85, 0.35)', fuel: 0.8, name: 'Shrubland' },
+            BARREN: { color: 'rgba(210, 180, 140, 0.3)', fuel: 0.3, name: 'Barren' },
+            WATER: { color: 'rgba(65, 105, 225, 0.5)', fuel: 0, name: 'Water' }
+        };
+
+        const WIND_DIRECTIONS = {
+            'N': { dx: 0, dy: -1 },
+            'NE': { dx: 1, dy: -1 },
+            'E': { dx: 1, dy: 0 },
+            'SE': { dx: 1, dy: 1 },
+            'S': { dx: 0, dy: 1 },
+            'SW': { dx: -1, dy: 1 },
+            'W': { dx: -1, dy: 0 },
+            'NW': { dx: -1, dy: -1 },
+            'NONE': { dx: 0, dy: 0 }
+        };
+
+        let terrain = [];
+        let fireGrid = [];
+        let ignitionPoint = null;
+        let isRunning = false;
+        let simulationTime = 0;
+        let windDirection = 'E';
+        
+        let temperature = 25;
+        let precipitation = 30;
+        let windSpeed = 15;
+        let simSpeed = 5;
+
+function initTerrain() {
+	            const WATER_CENTER_X = Math.floor(GRID_SIZE * 0.25); // X center for water cluster
+	            const WATER_CENTER_Y = Math.floor(GRID_SIZE * 0.75); // Y center for water cluster
+	            const WATER_RADIUS = GRID_SIZE * 0.15 * GRID_SIZE; // Radius for water cluster (scaled by grid size)
+	            
+	            terrain = [];
+	            for (let y = 0; y < GRID_SIZE; y++) {
+	                terrain[y] = [];
+	                for (let x = 0; x < GRID_SIZE; x++) {
+	                    const distSq = (x - WATER_CENTER_X) ** 2 + (y - WATER_CENTER_Y) ** 2;
+	                    
+	                    if (distSq < WATER_RADIUS && Math.random() < 0.8) {
+	                        terrain[y][x] = TERRAIN_TYPES.WATER;
+	                    } else {
+	                        // Re-use original logic for other terrain types
+	                        const rand = Math.random();
+	                        const noiseVal = (Math.sin(x * 0.3) + Math.cos(y * 0.3)) / 2;
+	                        const combined = rand + noiseVal * 0.3;
+	                        
+	                        if (combined < 0.35) {
+	                            terrain[y][x] = TERRAIN_TYPES.BARREN;
+	                        } else if (combined < 0.55) {
+	                            terrain[y][x] = TERRAIN_TYPES.GRASS;
+	                        } else if (combined < 0.75) {
+	                            terrain[y][x] = TERRAIN_TYPES.SHRUB;
+	                        } else {
+	                            terrain[y][x] = TERRAIN_TYPES.FOREST;
+	                        }
+	                    }
+	                }
+	            }
+	        }
+
+        function initFireGrid() {
+            fireGrid = [];
+            for (let y = 0; y < GRID_SIZE; y++) {
+                fireGrid[y] = [];
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    fireGrid[y][x] = { burning: false, burnedOut: false, intensity: 0 };
+                }
+            }
+        }
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const cell = fireGrid[y][x];
+                    
+                    if (cell.burnedOut) {
+                        ctx.fillStyle = 'rgba(26, 26, 26, 0.8)';
+} else if (cell.burning) {
+	                        // Change 2: Use the underlying tile color for burning tiles
+	                        const baseColor = terrain[y][x].color;
+	                        const intensity = cell.intensity;
+	                        
+	                        // Function to convert hex to RGB
+	                        const hexToRgb = hex => {
+	                            const bigint = parseInt(hex.slice(1), 16);
+	                            return {
+	                                r: (bigint >> 16) & 255,
+	                                g: (bigint >> 8) & 255,
+	                                b: bigint & 255
+	                            };
+	                        };
+	                        
+	                        // Function to convert RGB to rgba
+	                        const rgbToRgba = (r, g, b, a) => `rgba(${r}, ${g}, ${b}, ${a})`;
+	
+	                        const baseRgb = hexToRgb(baseColor);
+	                        
+	                        // Fire color (Orange-Red)
+	                        const fireR = 255;
+	                        const fireG = 69;
+	                        const fireB = 0;
+	                        
+	                        // Blend base color with fire color based on intensity
+	                        const mixedR = Math.round(baseRgb.r * (1 - intensity) + fireR * intensity);
+	                        const mixedG = Math.round(baseRgb.g * (1 - intensity) + fireG * intensity);
+	                        const mixedB = Math.round(baseRgb.b * (1 - intensity) + fireB * intensity);
+	                        
+	                        ctx.fillStyle = rgbToRgba(mixedR, mixedG, mixedB, 0.8 + intensity * 0.2); // Opacity increases with intensity
+	                    } else {
+	                        ctx.fillStyle = terrain[y][x].color;
+	                    }
+                    
+                    ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                    ctx.strokeRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                }
+            }
+            
+            if (ignitionPoint && !isRunning) {
+                const x = ignitionPoint.x * CELL_SIZE + CELL_SIZE / 2;
+                const y = ignitionPoint.y * CELL_SIZE + CELL_SIZE / 2;
+                ctx.font = `${CELL_SIZE * 2.4}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#FF3300';
+                ctx.shadowColor = '#FF0000';
+                ctx.shadowBlur = 10;
+                ctx.fillText('🔥', x, y);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function updateFire() {
+            const newFireGrid = JSON.parse(JSON.stringify(fireGrid));
+            
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    if (fireGrid[y][x].burning && !fireGrid[y][x].burnedOut) {
+                        fireGrid[y][x].intensity -= 0.1;
+                        
+                        if (fireGrid[y][x].intensity <= 0) {
+                            newFireGrid[y][x].burning = false;
+                            newFireGrid[y][x].burnedOut = true;
+                            newFireGrid[y][x].intensity = 0;
+                        }
+                        
+                        const neighbors = getNeighbors(x, y);
+                        neighbors.forEach(([nx, ny, isWindDir]) => {
+                            if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
+                                if (!fireGrid[ny][nx].burning && !fireGrid[ny][nx].burnedOut) {
+                                    const spreadChance = calculateSpreadProbability(nx, ny, isWindDir);
+                                    if (Math.random() < spreadChance) {
+                                        newFireGrid[ny][nx].burning = true;
+                                        newFireGrid[ny][nx].intensity = 1.0;
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+            
+            fireGrid = newFireGrid;
+        }
+
+        function getNeighbors(x, y) {
+            const wind = WIND_DIRECTIONS[windDirection];
+            const neighbors = [];
+            
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const isWindDirection = (dx === wind.dx && dy === wind.dy);
+                    neighbors.push([x + dx, y + dy, isWindDirection]);
+                }
+            }
+            
+            return neighbors;
+        }
+
+function calculateSpreadProbability(x, y, isWindDir) {
+	            const terrainType = terrain[y][x];
+	            // Requirement 4: No spread in Water tiles (fuel === 0)
+	            if (terrainType.fuel === 0) return 0;
+	            
+	            // Base probability calculation from existing weather/fuel factors
+	            // We'll use a lower base probability to allow the new directional factors to dominate.
+	            let baseProb = terrainType.fuel * 0.05; 
+	            
+	            const tempFactor = 1 + (temperature - 25) * 0.02;
+	            baseProb *= tempFactor;
+	            
+	            const humidityFactor = 1 - (precipitation / 100) * 0.7;
+	            baseProb *= humidityFactor;
+	            
+	            // New spread logic: 60% wind, 30% Forest, 10% Grassland
+	            let directionalFactor = 0;
+	            const windSpeedFactor = (windSpeed / 80); // 0 to 1
+	            
+	            if (isWindDir) {
+	                // 60% wind direction influence, scaled by wind speed
+	                directionalFactor = 0.6 * windSpeedFactor;
+	            } else {
+	                // Spread against the wind or sideways, influenced by fuel type
+	                if (terrainType.name === 'FOREST') {
+	                    // 30% influence from Forest fuel
+	                    directionalFactor = 0.3 * (terrainType.fuel / 10); 
+	                } else if (terrainType.name === 'GRASS') {
+	                    // 10% influence from Grassland fuel
+	                    directionalFactor = 0.1 * (terrainType.fuel / 10); 
+	                }
+	            }
+	            
+	            // Combine base probability (weather) and directional factor
+	            let finalProb = baseProb + directionalFactor;
+	            
+	            // Ensure the probability is between 0 and 1
+	            return Math.min(Math.max(finalProb, 0), 1);
+	        }
+
+        function updateStats() {
+            const minutes = Math.floor(simulationTime / 60);
+            document.getElementById('timeElapsed').textContent = `${minutes} min`;
+            
+            let burnedCount = 0;
+            let activeCount = 0;
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    if (fireGrid[y][x].burnedOut) burnedCount++;
+                    if (fireGrid[y][x].burning) activeCount++;
+                }
+            }
+            
+            const hectares = (burnedCount * 0.25).toFixed(1);
+            document.getElementById('areaBurned').textContent = `${hectares} ha`;
+            document.getElementById('activeFire').textContent = `${activeCount} cells`;
+        }
+
+        let animationInterval;
+        function startSimulation() {
+            if (!ignitionPoint) {
+                alert('Please place a fire ignition point on the map first!');
+                return;
+            }
+            
+            if (!isRunning) {
+                isRunning = true;
+                fireGrid[ignitionPoint.y][ignitionPoint.x].burning = true;
+                fireGrid[ignitionPoint.y][ignitionPoint.x].intensity = 1.0;
+                
+                const delay = Math.max(50, 500 - simSpeed * 40);
+                animationInterval = setInterval(() => {
+                    updateFire();
+                    drawGrid();
+                    simulationTime += 1;
+                    updateStats();
+                }, delay);
+            }
+        }
+
+        function pauseSimulation() {
+            isRunning = false;
+            clearInterval(animationInterval);
+        }
+
+        function resetSimulation() {
+            pauseSimulation();
+            initFireGrid();
+            ignitionPoint = null;
+            simulationTime = 0;
+            drawGrid();
+            updateStats();
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (isRunning) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / CELL_SIZE);
+            const y = Math.floor((e.clientY - rect.top) / CELL_SIZE);
+            
+            if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+                ignitionPoint = { x, y };
+                drawGrid();
+            }
+        });
+
+        document.getElementById('startBtn').addEventListener('click', startSimulation);
+        document.getElementById('pauseBtn').addEventListener('click', pauseSimulation);
+        document.getElementById('resetBtn').addEventListener('click', resetSimulation);
+
+        document.querySelectorAll('.wind-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.wind-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                windDirection = btn.dataset.dir;
+            });
+        });
+
+        document.getElementById('temperature').addEventListener('input', (e) => {
+            temperature = parseInt(e.target.value);
+            document.getElementById('tempValue').textContent = `${temperature}°C`;
+        });
+
+        document.getElementById('precipitation').addEventListener('input', (e) => {
+            precipitation = parseInt(e.target.value);
+            document.getElementById('precipValue').textContent = `${precipitation}%`;
+        });
+
+        document.getElementById('windSpeed').addEventListener('input', (e) => {
+            windSpeed = parseInt(e.target.value);
+            document.getElementById('windSpeedValue').textContent = `${windSpeed} km/h`;
+        });
+
+        document.getElementById('simSpeed').addEventListener('input', (e) => {
+            simSpeed = parseInt(e.target.value);
+            const speedMultiplier = (simSpeed / 5).toFixed(1);
+            document.getElementById('speedValue').textContent = `${speedMultiplier}x`;
+            
+            if (isRunning) {
+                pauseSimulation();
+                startSimulation();
+            }
+        });
+
+        initTerrain();
+        initFireGrid();
+        drawGrid();
+        updateStats();
+    </script>
+</body>
+</html>
